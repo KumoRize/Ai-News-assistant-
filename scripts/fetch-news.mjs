@@ -45,6 +45,10 @@ const parser = new XMLParser({
   attributeNamePrefix: '@',
   textNodeName: '#text',
   cdataPropName: '#cdata',
+  // Entities are decoded by clean()/decode() below; letting the parser expand them hits its
+  // entity limit on long feeds.
+  processEntities: false,
+  htmlEntities: false,
 });
 
 const asArray = (v) => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -111,7 +115,7 @@ function parseFeed(xml, source) {
     const raw = text(it['content:encoded']) || text(it.description);
     out.push({
       title: clean(text(it.title), 200),
-      url: text(it.link) || it.guid?.['#text'] || text(it.guid),
+      url: decode(text(it.link) || it.guid?.['#text'] || text(it.guid)).trim(),
       date: text(it.pubDate) || text(it['dc:date']),
       summary: clean(text(it.description) || raw),
       image: firstImage(it, raw),
@@ -124,7 +128,7 @@ function parseFeed(xml, source) {
     const raw = text(it.content) || text(it.summary);
     out.push({
       title: clean(text(it.title), 200),
-      url: alt?.['@href'] || text(alt),
+      url: decode(alt?.['@href'] || text(alt)).trim(),
       date: text(it.published) || text(it.updated),
       summary: clean(text(it.summary) || raw),
       image: firstImage(it, raw),
