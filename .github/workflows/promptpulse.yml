@@ -44,6 +44,7 @@ jobs:
         run: npm run push
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
           PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
           FORCE_PUSH: ${{ inputs.test_notification && 'true' || 'false' }}
           SITE_URL: ${{ vars.SITE_URL }}
@@ -53,6 +54,12 @@ jobs:
           mkdir _site
           cp -r index.html manifest.webmanifest sw.js 404.html assets data _site/
           touch _site/.nojekyll
+          # Use the public key generated in the app (repo variable), if set.
+          if [ -n "$VAPID_PUBLIC_KEY" ]; then
+            sed -i "s|VAPID_PUBLIC_KEY: '[^']*'|VAPID_PUBLIC_KEY: '$VAPID_PUBLIC_KEY'|" _site/assets/js/config.js
+          fi
+        env:
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

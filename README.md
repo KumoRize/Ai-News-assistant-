@@ -30,14 +30,14 @@
    Your site goes live at `https://<your-username>.github.io/<repo-name>/`.
 
 ### 2. Turn on phone notifications
-1. **Settings → Secrets and variables → Actions → New repository secret**:
-   - `VAPID_PRIVATE_KEY`: the private key you were given when the app was created. To make a new pair, run `npm run vapid`, put the new `publicKey` in `assets/js/config.js`, and the `privateKey` here.
-2. Open the site on your phone:
+1. Open the site on your phone and install it:
    - **Android (Chrome):** ⋮ menu → *Install app*.
    - **iPhone (Safari, iOS 16.4+):** Share → *Add to Home Screen*, then open it from the Home Screen.
-3. In the app: **Profile → 🔔 Enable notifications → Copy device code**.
-4. Add a secret named `PUSH_SUBSCRIPTIONS` and paste the device code. For several devices, put one code per line.
-5. Test it: **Actions → Run workflow → tick "Send a test notification"**. 🎉
+2. In the app: **Profile → 🔐 Generate keys**. Your phone creates the key pair, so nobody else ever sees the secret.
+   - Save the **secret key** as a repository **secret** named `VAPID_PRIVATE_KEY`.
+   - Save the **public key** as a repository **variable** (Variables tab) named `VAPID_PUBLIC_KEY`.
+3. Back in the app: **🔔 Enable notifications → Copy device code**. Save it as a secret named `PUSH_SUBSCRIPTIONS`. For several devices, put one code per line.
+4. Test it: **Actions → Run workflow → tick "Send a test notification"**. 🎉
 
 The workflow runs every hour. Each device gets its briefing once a day, in the hour you picked in the app.
 If you change the notification time, copy the new device code into the secret.

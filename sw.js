@@ -1,5 +1,5 @@
 // PromptPulse service worker: offline app shell, push notifications, background refresh.
-const VERSION = 'pp-v1.0.0';
+const VERSION = 'pp-v1.1.0';
 const SHELL = [
   './',
   './index.html',

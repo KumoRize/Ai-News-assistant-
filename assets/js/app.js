@@ -474,6 +474,7 @@ const views = {
         <div class="row wrap" style="margin-top:6px">
           <button class="btn primary" data-action="enable-push">${s.push.enabled ? '🔁 Re-register device' : '🔔 Enable notifications'}</button>
           <button class="btn ghost" data-action="test-notify">🧪 Test on this device</button>
+          <button class="btn ghost" data-action="gen-keys">🔐 Generate keys</button>
           ${s.push.code ? '<button class="btn ghost" data-action="show-code">🔑 Device code</button>' : ''}
         </div>
       </div>
@@ -804,6 +805,41 @@ function b64ToU8(b64) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
+// The public key: one generated on this device (until the site is redeployed with it) or the deployed one.
+const KEY_STORE = 'promptpulse:vapid-public';
+function vapidKey() {
+  try { return localStorage.getItem(KEY_STORE) || CONFIG.VAPID_PUBLIC_KEY; } catch { return CONFIG.VAPID_PUBLIC_KEY; }
+}
+const toB64Url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+// Generates a fresh Web Push (VAPID) key pair entirely in this browser. Nothing is sent anywhere.
+async function generateKeys() {
+  if (!crypto?.subtle) { toast('Open the app over https to generate keys', 'error'); return; }
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const publicKey = toB64Url(await crypto.subtle.exportKey('raw', pair.publicKey));
+  const privateKey = (await crypto.subtle.exportKey('jwk', pair.privateKey)).d;
+  try { localStorage.setItem(KEY_STORE, publicKey); } catch { /* ignore */ }
+  const kPriv = keep(privateKey);
+  const kPub = keep(publicKey);
+  play('success');
+  const repo = esc(CONFIG.REPO);
+  openModal(`
+    <h2>🔐 Your notification keys</h2>
+    <p class="muted">Created on this device just now. Add both to GitHub, then tap <b>Enable notifications</b>.</p>
+    <div class="lesson-section"><h4>1 · Secret (keep private)</h4>
+      <p class="small muted">New repository <b>secret</b> named <b>VAPID_PRIVATE_KEY</b></p>
+      <div class="code-out" style="max-height:80px">${esc(privateKey)}</div>
+      <div class="row wrap" style="margin-top:8px"><button class="btn primary sm" data-action="copy" data-key="${kPriv}">📋 Copy secret key</button>
+      <a class="btn ghost sm" href="https://github.com/${repo}/settings/secrets/actions/new" target="_blank" rel="noopener">Open Secrets ↗</a></div></div>
+    <div class="lesson-section"><h4>2 · Public key</h4>
+      <p class="small muted">Variables tab → New repository <b>variable</b> named <b>VAPID_PUBLIC_KEY</b></p>
+      <div class="code-out" style="max-height:80px">${esc(publicKey)}</div>
+      <div class="row wrap" style="margin-top:8px"><button class="btn primary sm" data-action="copy" data-key="${kPub}">📋 Copy public key</button>
+      <a class="btn ghost sm" href="https://github.com/${repo}/settings/variables/actions/new" target="_blank" rel="noopener">Open Variables ↗</a></div></div>
+    <div class="tipbox" style="margin-top:14px">⚠️ This secret key is shown only once. Generating new keys later means re-registering every device.</div>
+    <button class="btn primary block" style="margin-top:16px" data-action="enable-push">🔔 Next: enable notifications</button>`);
+}
+
 async function syncSwPrefs() {
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -838,8 +874,13 @@ async function enablePush(anchor) {
   if (perm !== 'granted') { play('error'); toast('Notifications are blocked. Allow them in your browser/site settings.', 'error'); return; }
   try {
     const reg = await navigator.serviceWorker.ready;
+    const key = vapidKey();
     let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(CONFIG.VAPID_PUBLIC_KEY) });
+    if (sub && sub.options?.applicationServerKey && toB64Url(sub.options.applicationServerKey) !== key) {
+      await sub.unsubscribe(); // registered with an old key: re-register with the current one
+      sub = null;
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(key) });
     const wasEnabled = S().push.enabled;
     await refreshDeviceCode();
     try { await reg.periodicSync?.register('pp-daily', { minInterval: 12 * 3600 * 1000 }); } catch { /* optional */ }
@@ -1167,7 +1208,12 @@ document.addEventListener('click', async (e) => {
 
     // ---- Profile ----
     case 'edit-profile': openOnboarding(true); break;
-    case 'enable-push': enablePush(el); break;
+    case 'enable-push': closeModal(true); enablePush(el); break;
+    case 'gen-keys':
+      openModal(`<h2>🔐 Set up notification keys</h2><p class="muted">Notifications need a key pair. Your phone creates it here, so nobody else ever sees the secret half. Do this <b>once</b>, on one device.</p>
+        <button class="btn primary block" style="margin-top:14px" data-action="gen-keys-go">✨ Generate my keys</button>`);
+      break;
+    case 'gen-keys-go': generateKeys(); break;
     case 'test-notify': testNotify(); break;
     case 'show-code': showDeviceCode(); break;
     case 'install': install(); break;

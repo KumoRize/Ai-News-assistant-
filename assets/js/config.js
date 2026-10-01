@@ -1,7 +1,8 @@
 // PromptPulse configuration.
 // VAPID_PUBLIC_KEY is the *public* half of the Web Push key pair. It is safe to publish.
-// The matching private key lives only in the GitHub secret VAPID_PRIVATE_KEY.
-// To rotate: run `npm run vapid`, paste the new publicKey here, and update the secret.
+// Easiest setup: in the app, Profile → Generate keys. Save the secret half as the GitHub secret
+// VAPID_PRIVATE_KEY and the public half as the repo variable VAPID_PUBLIC_KEY; the workflow
+// then injects it here at deploy time.
 export const CONFIG = {
   APP_NAME: 'PromptPulse',
   // GitHub repo that runs the daily news + notification workflow (used for setup links).

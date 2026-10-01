@@ -2,7 +2,8 @@
 // local hour is "now". Runs hourly from GitHub Actions.
 //
 // Secrets / env:
-//   VAPID_PRIVATE_KEY   - private half of the key pair whose public half is in assets/js/config.js
+//   VAPID_PRIVATE_KEY   - private half of the key pair (generate it in the app: Profile → Generate keys)
+//   VAPID_PUBLIC_KEY    - repo variable with the public half (falls back to assets/js/config.js)
 //   PUSH_SUBSCRIPTIONS  - one or more "device codes" copied from the app (Profile → Notifications).
 //                         Paste them as a JSON array, or one per line.
 //   FORCE_PUSH=true     - send to every device right now (used by the "test notification" button).
@@ -13,6 +14,7 @@ import { CONFIG } from '../assets/js/config.js';
 import { dayKey, dailyKeywords } from '../assets/js/daily.js';
 
 const { VAPID_PRIVATE_KEY, PUSH_SUBSCRIPTIONS, FORCE_PUSH, SITE_URL, VAPID_SUBJECT } = process.env;
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || CONFIG.VAPID_PUBLIC_KEY;
 
 function parseDevices(raw) {
   const s = (raw || '').trim();
@@ -39,7 +41,7 @@ async function main() {
     console.log('Push not configured yet (VAPID_PRIVATE_KEY / PUSH_SUBSCRIPTIONS secrets missing) - skipping.');
     return;
   }
-  webpush.setVapidDetails(VAPID_SUBJECT || 'mailto:promptpulse@example.com', CONFIG.VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  webpush.setVapidDetails(VAPID_SUBJECT || 'mailto:promptpulse@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
   const devices = parseDevices(PUSH_SUBSCRIPTIONS);
   const force = FORCE_PUSH === 'true';
