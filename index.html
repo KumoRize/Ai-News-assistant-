@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PromptPulse</title>
+  <meta name="description" content="Daily AI news, pro prompting lessons, fresh keywords and challenges, delivered to your phone.">
+  <meta name="theme-color" content="#0B0F1F">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PromptPulse">
+  <meta property="og:title" content="PromptPulse - AI News & Prompting Coach">
+  <meta property="og:description" content="Daily AI news, pro prompting lessons and fresh keywords.">
+  <meta property="og:image" content="assets/icons/icon-512.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/icons/favicon-64.png" sizes="64x64" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="bg-fx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+
+  <div id="splash" aria-hidden="true">
+    <div class="splash-inner">
+      <svg class="splash-logo" viewBox="0 0 512 512">
+        <defs>
+          <linearGradient id="s-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A1440"/><stop offset="1" stop-color="#070A18"/></linearGradient>
+          <linearGradient id="s-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7C3AED"/><stop offset=".55" stop-color="#A855F7"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
+          <linearGradient id="s-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
+        </defs>
+        <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#s-bg)"/>
+        <rect x="22" y="22" width="468" height="468" rx="114" fill="none" stroke="url(#s-ring)" stroke-width="10"/>
+        <path class="pulse-path" d="M86 284 H170 L200 236 L230 330 L262 168 L298 312 L320 284 H426" fill="none" stroke="url(#s-line)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="spark" d="M262 92 Q270 150 320 158 Q270 166 262 224 Q254 166 204 158 Q254 150 262 92 Z" fill="#fff"/>
+      </svg>
+      <div class="splash-title">PromptPulse</div>
+      <div class="splash-sub">Your daily AI edge</div>
+    </div>
+  </div>
+
+  <div id="app">
+    <header class="topbar">
+      <a class="brand" href="#/home" aria-label="PromptPulse home"><img src="assets/icons/logo.svg" alt=""><span>PromptPulse</span></a>
+      <div class="top-stats">
+        <span class="pill streak" title="Daily streak"><span class="fire">🔥</span><b id="streak-count">0</b></span>
+        <span class="pill" title="Experience points">⚡ <b id="xp-count">0</b></span>
+        <button class="avatar-btn" id="avatar-btn" aria-label="Your profile">🙂</button>
+      </div>
+    </header>
+    <main id="view" aria-live="polite"></main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Main">
+    <button class="nav-btn" data-route="home"><span class="ico">🏠</span>Home</button>
+    <button class="nav-btn" data-route="news"><span class="ico">📰</span>News<i class="dot hidden" id="news-dot"></i></button>
+    <button class="nav-btn" data-route="learn"><span class="ico">🎓</span>Learn</button>
+    <button class="nav-btn" data-route="lab"><span class="ico">🧪</span>Lab</button>
+    <button class="nav-btn" data-route="profile"><span class="ico">👤</span>Profile</button>
+  </nav>
+
+  <div id="toasts" role="status"></div>
+  <canvas id="confetti"></canvas>
+  <noscript><p style="padding:24px;text-align:center">PromptPulse needs JavaScript enabled.</p></noscript>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

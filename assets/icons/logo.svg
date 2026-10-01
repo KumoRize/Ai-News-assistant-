@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PromptPulse logo">
+  <defs>
+    <linearGradient id="pp-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A1440"/>
+      <stop offset="1" stop-color="#070A18"/>
+    </linearGradient>
+    <linearGradient id="pp-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7C3AED"/>
+      <stop offset=".55" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="pp-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <radialGradient id="pp-glow" cx=".5" cy=".42" r=".55">
+      <stop offset="0" stop-color="#7C3AED" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="pp-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#pp-bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#pp-glow)"/>
+  <rect x="22" y="22" width="468" height="468" rx="114" fill="none" stroke="url(#pp-ring)" stroke-width="10" opacity=".9"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M86 284 H170 L200 236 L230 330 L262 168 L298 312 L320 284 H426" stroke="url(#pp-line)" stroke-width="34" opacity=".55" filter="url(#pp-blur)"/>
+    <path d="M86 284 H170 L200 236 L230 330 L262 168 L298 312 L320 284 H426" stroke="url(#pp-line)" stroke-width="26"/>
+  </g>
+  <path d="M262 92 Q270 150 320 158 Q270 166 262 224 Q254 166 204 158 Q254 150 262 92 Z" fill="#F472B6" filter="url(#pp-blur)" opacity=".7"/>
+  <path d="M262 92 Q270 150 320 158 Q270 166 262 224 Q254 166 204 158 Q254 150 262 92 Z" fill="#FFFFFF"/>
+  <circle cx="426" cy="284" r="16" fill="#22D3EE"/>
+</svg>

@@ -1,0 +1,69 @@
+name: PromptPulse - news, deploy & notify
+
+on:
+  # Every hour: refresh AI news, redeploy, and notify devices whose chosen hour is now.
+  schedule:
+    - cron: '7 * * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: 'Send a test notification to all registered devices right now'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: promptpulse
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch latest AI news
+        run: npm run news
+        continue-on-error: true
+
+      - name: Send daily notifications
+        if: github.event_name != 'push'
+        run: npm run push
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
+          FORCE_PUSH: ${{ inputs.test_notification && 'true' || 'false' }}
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp -r index.html manifest.webmanifest sw.js 404.html assets data _site/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

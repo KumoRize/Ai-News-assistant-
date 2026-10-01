@@ -1,0 +1,17 @@
+{
+  "name": "promptpulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PromptPulse - daily AI news, prompting skills and keywords as an installable web app.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve -l 8080 .",
+    "news": "node scripts/fetch-news.mjs",
+    "push": "node scripts/send-push.mjs",
+    "vapid": "npx --yes web-push generate-vapid-keys --json"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0",
+    "web-push": "^3.6.7"
+  }
+}
