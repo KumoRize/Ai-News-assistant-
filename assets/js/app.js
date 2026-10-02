@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
-import { LESSONS, LEVELS, KEYWORDS, KEYWORD_CATEGORIES, TEMPLATES, INTERESTS, AVATARS, STRENGTH_SIGNALS } from './content.js';
+import { LESSONS, LEVELS, KEYWORDS, KEYWORD_CATEGORIES, TEMPLATES, INTERESTS, AVATARS } from './content.js';
+import { analyze, enhance, TYPES, TONES, LENGTHS, FORMATS } from './promptcheck.js';
 import { dayKey, dailyKeywords, dailyChallenge, dailyQuiz, dailyLesson } from './daily.js';
 import { store, addXP, levelFor, touchStreak, checkBadges, BADGES } from './store.js';
 import { play, setSoundEnabled } from './sound.js';
@@ -409,18 +410,24 @@ const views = {
     const s = S();
     return `<div class="view stagger">
       <h1 style="font-size:24px;margin-bottom:4px">Prompt Lab 🧪</h1>
-      <p class="muted small" style="margin:0 0 14px">Write a prompt, see its strength score live, and upgrade it in one tap.</p>
+      <p class="muted small" style="margin:0 0 14px">Paste any prompt to see its <b>strength</b> and <b>accuracy</b>, then enhance it to 100% in one tap.</p>
       <div class="card glow">
+        <div class="card-kicker">🩺 Prompt Checker</div>
         <div class="field"><label for="lab-input">Your prompt</label>
           <textarea id="lab-input" class="input" placeholder="e.g. write an instagram caption for my bakery">${esc(labState.text)}</textarea></div>
         <div id="lab-score"></div>
-        <div class="grid-2" style="margin-top:12px">
-          <div class="field"><label>Type</label><select class="input" id="lab-type">${['Auto', 'Writing', 'Code', 'Image', 'Research', 'Business', 'Learning'].map((t) => `<option ${labState.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-          <div class="field"><label>Tone</label><select class="input" id="lab-tone">${['Professional', 'Friendly', 'Persuasive', 'Playful', 'Academic', 'Simple (ELI5)'].map((t) => `<option ${labState.tone === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-          <div class="field"><label>Length</label><select class="input" id="lab-length">${['Concise', 'Medium', 'Detailed'].map((t) => `<option ${labState.length === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-          <div class="field"><label>Format</label><select class="input" id="lab-format">${['Best fit', 'Bullet points', 'Step-by-step', 'Table', 'JSON', 'Paragraphs'].map((t) => `<option ${labState.format === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-        </div>
-        <button class="btn primary block" data-action="enhance">✨ Enhance my prompt</button>
+        <details class="lab-options" ${labState.optionsOpen ? 'open' : ''}>
+          <summary>⚙️ Enhance options <span class="faint small">(optional)</span></summary>
+          <div class="grid-2" style="margin-top:12px">
+            <div class="field"><label for="lab-type">Type</label><select class="input" id="lab-type">${['Auto', ...TYPES].map((t) => `<option ${labState.type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="field"><label for="lab-tone">Tone</label><select class="input" id="lab-tone">${TONES.map((t) => `<option ${labState.tone === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="field"><label for="lab-length">Length</label><select class="input" id="lab-length">${LENGTHS.map((t) => `<option ${labState.length === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+            <div class="field"><label for="lab-format">Format</label><select class="input" id="lab-format">${FORMATS.map((t) => `<option ${labState.format === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+          </div>
+          <div class="field"><label for="lab-audience">Who is it for?</label><input id="lab-audience" class="input" maxlength="120" placeholder="e.g. busy parents, beginner coders" value="${esc(labState.audience)}"></div>
+          <div class="field"><label for="lab-goal">What should it achieve?</label><input id="lab-goal" class="input" maxlength="160" placeholder="e.g. get more customers to visit" value="${esc(labState.goal)}"></div>
+        </details>
+        <button class="btn primary block" style="margin-top:12px" data-action="enhance">⚡ Enhance to 100%</button>
         <div id="lab-out"></div>
       </div>
 
@@ -593,94 +600,42 @@ function flipCard(k) {
 // ============================================================================
 // Prompt Lab logic
 // ============================================================================
-const labState = { text: '', type: 'Auto', tone: 'Professional', length: 'Medium', format: 'Best fit' };
+const labState = { text: '', type: 'Auto', tone: 'Professional', length: 'Auto', format: 'Best fit', audience: '', goal: '', optionsOpen: false };
+const labText = () => labState.text.replace(/^\/\/ Challenge:.*\n+/, '');
 
-function analyzePrompt(text) {
-  const words = text.trim().split(/\s+/).filter(Boolean).length;
-  const labels = { role: 'Role / persona', audience: 'Audience', format: 'Output format', length: 'Length target', constraints: 'Constraints', examples: 'Examples', reasoning: 'Reasoning steps', context: 'Context / goal' };
-  const checks = Object.fromEntries(Object.entries(STRENGTH_SIGNALS).map(([k, re]) => [k, re.test(text)]));
-  const hits = Object.values(checks).filter(Boolean).length;
-  const score = text.trim() ? Math.min(100, Math.round(hits * 10.5 + Math.min(16, words / 3))) : 0;
-  const tips = [];
-  if (!checks.role) tips.push('Add a role: “You are a …”');
-  if (!checks.context) tips.push('Explain your goal or why you need this.');
-  if (!checks.format) tips.push('Say what format you want (list, table, JSON…).');
-  if (!checks.length) tips.push('Add a measurable length (e.g. “under 150 words”).');
-  if (!checks.audience) tips.push('Name the audience.');
-  if (words < 12) tips.push('Too short: models guess when details are missing.');
-  return { score, checks, labels, tips, words };
-}
+const scoreColor = (n) => (n >= 90 ? 'var(--green)' : n >= 60 ? 'var(--cyan)' : n >= 40 ? 'var(--amber)' : 'var(--pink)');
+const scoreRing = (n, label) => `<div class="ring" style="--p:${n};background:conic-gradient(${scoreColor(n)} calc(var(--p)*1%), rgba(255,255,255,.08) 0)"><div><b>${n}</b><span>${label}</span></div></div>`;
 
-function detectType(text) {
-  if (/\b(photo|image|picture|illustration|logo|render|wallpaper|drawing|painting|poster|thumbnail|midjourney|dall-?e)\b/i.test(text)) return 'Image';
-  if (/\b(code|function|bug|python|javascript|typescript|api|sql|script|error|regex|react|html|css|app)\b/i.test(text)) return 'Code';
-  if (/\b(research|study|studies|evidence|compare|analysis|sources?|data)\b/i.test(text)) return 'Research';
-  if (/\b(business|startup|marketing|sales|customers?|pricing|strategy|brand|revenue|pitch)\b/i.test(text)) return 'Business';
-  if (/\b(learn|teach|explain|understand|study|tutor|course|exam)\b/i.test(text)) return 'Learning';
-  return 'Writing';
-}
-
-function enhancePrompt(text, opts) {
-  const raw = text.trim();
-  const type = opts.type === 'Auto' ? detectType(raw) : opts.type;
-  if (type === 'Image') {
-    const base = raw.replace(/^(please\s+)?(create|generate|make|draw|design)\s+(me\s+)?(an?\s+)?(image|picture|photo|illustration)\s+(of\s+)?/i, '');
-    const mood = { Professional: 'clean, premium', Friendly: 'warm, inviting', Persuasive: 'bold, eye-catching', Playful: 'vibrant, whimsical', Academic: 'precise, diagrammatic', 'Simple (ELI5)': 'simple, clear' }[opts.tone];
-    const detail = { Concise: 'minimalist composition', Medium: 'balanced composition, rule of thirds', Detailed: 'intricate details, rich textures, 8k detail' }[opts.length];
-    return `${base}, ${mood} mood, cinematic lighting with soft rim light, shallow depth of field, shot on 35mm lens, harmonious colour palette, ${detail}, sharp focus, aspect ratio 16:9\n\nNegative prompt: blurry, low quality, distorted hands, watermark, text artifacts`;
-  }
-  const roles = {
-    Writing: 'a professional writer and editor with a sharp eye for clarity',
-    Code: 'a senior software engineer who writes clean, well-tested, production-ready code',
-    Research: 'a meticulous research analyst who separates evidence from opinion',
-    Business: 'an experienced business strategist and marketer',
-    Learning: 'a patient expert tutor who explains with analogies and checks understanding',
-  };
-  const formats = {
-    'Best fit': 'Choose the clearest structure for this task (headings, bullets or a table as appropriate).',
-    'Bullet points': 'Use concise bullet points grouped under short headings.',
-    'Step-by-step': 'Use numbered steps, one action per step.',
-    Table: 'Present the core information as a markdown table, followed by a one-line takeaway.',
-    JSON: 'Return only valid JSON. Use clear, consistent keys.',
-    Paragraphs: 'Write in well-structured prose paragraphs of 2–4 sentences.',
-  };
-  const lengths = { Concise: 'Keep it tight: under 150 words.', Medium: 'Aim for roughly 200–400 words.', Detailed: 'Be thorough and comprehensive; depth matters more than brevity.' };
-  const extra = {
-    Writing: '- Open with a strong hook and end with a clear takeaway or call to action.',
-    Code: '- State assumptions, handle edge cases, and include tests or usage examples.\n- Briefly explain key design decisions.',
-    Research: '- Cite sources for factual claims and separate consensus from open debate.\n- Flag anything that may be outdated.',
-    Business: '- Make recommendations concrete and actionable, with numbers or examples where possible.',
-    Learning: '- Use one vivid analogy and finish with 3 quick questions to check my understanding.',
-  };
-  return `You are ${roles[type]}.
-
-<task>
-${raw}
-</task>
-
-<format>
-${formats[opts.format]}
-</format>
-
-<guidelines>
-- Tone: ${opts.tone.toLowerCase()}.
-- Length: ${lengths[opts.length]}
-${extra[type]}
-- If important information is missing, ask me up to 2 clarifying questions before answering.
-- If you are unsure about a fact, say so rather than guessing.
-</guidelines>`;
+function checkList(title, list) {
+  return `<div class="check-col"><h4>${title}</h4>${list.map((c) => `<div class="check ${c.pass ? 'ok' : 'no'}">
+      <span class="c-ico">${c.pass ? '✔' : c.points > 0 ? '◐' : '✖'}</span>
+      <span class="grow"><b>${esc(c.label)}</b>${c.pass ? '' : `<span class="c-tip">${esc(c.tip)}</span>`}</span>
+      <span class="c-pts">${c.points}/${c.weight}</span></div>`).join('')}</div>`;
 }
 
 function renderLabScore() {
   const box = $('#lab-score');
   if (!box) return;
-  const a = analyzePrompt(labState.text);
-  const color = a.score >= 75 ? 'var(--green)' : a.score >= 45 ? 'var(--amber)' : 'var(--pink)';
-  box.innerHTML = labState.text.trim()
-    ? `<div class="score"><div class="ring" style="--p:${a.score};background:conic-gradient(${color} calc(var(--p)*1%), rgba(255,255,255,.08) 0)"><div><b>${a.score}</b><span>Score</span></div></div>
-        <div class="checks grow">${Object.entries(a.checks).map(([k, v]) => `<span class="${v ? 'ok' : 'no'}">${v ? '✔' : '○'} ${a.labels[k]}</span>`).join('')}</div></div>
-       ${a.tips.length ? `<div class="tipbox" style="margin-top:12px">💡 ${a.tips.slice(0, 3).map(esc).join('<br>💡 ')}</div>` : '<div class="tipbox" style="margin-top:12px">🔥 Excellent prompt structure!</div>'}`
-    : '<p class="faint small" style="margin:0">Start typing to see your prompt strength score.</p>';
+  const text = labText();
+  if (!text.trim()) {
+    box.innerHTML = '<p class="faint small" style="margin:0">Start typing to see your prompt\'s strength and accuracy.</p>';
+    return;
+  }
+  const r = analyze(text, { type: labState.type });
+  const fixes = [...r.strengthChecks, ...r.accuracyChecks].filter((c) => !c.pass).sort((a, b) => b.weight - b.points - (a.weight - a.points));
+  box.innerHTML = `
+    <div class="score-head">
+      ${scoreRing(r.strength, 'Strength')}
+      ${scoreRing(r.accuracy, 'Accuracy')}
+      <div class="grow">
+        <div class="grade" style="color:${scoreColor(r.overall)}">${esc(r.grade)} · ${r.overall}%</div>
+        <div class="faint small">Detected type: <span class="tag cyan">${esc(r.type)}</span> · ${r.words} words</div>
+      </div>
+    </div>
+    ${fixes.length ? `<div class="tipbox" style="margin-top:12px"><b>Top fixes</b><br>${fixes.slice(0, 3).map((c) => `💡 ${esc(c.tip)}`).join('<br>')}</div>` : '<div class="tipbox" style="margin-top:12px">🏆 Perfect prompt: every check passes!</div>'}
+    <details class="breakdown"><summary>See all ${r.strengthChecks.length + r.accuracyChecks.length} checks</summary>
+      <div class="check-cols">${checkList('💪 Strength', r.strengthChecks)}${checkList('🎯 Accuracy', r.accuracyChecks)}</div>
+    </details>`;
 }
 
 // ============================================================================
@@ -1155,14 +1110,33 @@ document.addEventListener('click', async (e) => {
 
     // ---- Lab ----
     case 'enhance': {
-      const text = labState.text.trim();
-      if (text.length < 3) { play('error'); toast('Write a prompt first', 'error'); $('#lab-input')?.focus(); break; }
-      const out = enhancePrompt(text.replace(/^\/\/ Challenge:.*\n+/, ''), labState);
-      $('#lab-out').innerHTML = `<div class="section-title" style="margin-top:18px"><h2 style="font-size:16px">✨ Enhanced prompt</h2><span class="tag green">Score ${analyzePrompt(out).score}</span></div><div class="code-out">${esc(out)}</div>${promptActions(out, { title: text.slice(0, 40) })}`;
+      const text = labText().trim();
+      if (text.length < 2) { play('error'); toast('Write a prompt first', 'error'); $('#lab-input')?.focus(); break; }
+      const before = analyze(text, { type: labState.type });
+      const { text: out, type } = enhance(text, labState);
+      const after = analyze(out, { type });
+      $('#lab-out').innerHTML = `
+        <div class="section-title" style="margin-top:20px"><h2 style="font-size:16px">⚡ Enhanced prompt</h2><span class="tag green">${after.overall}%</span></div>
+        <div class="score-head">${scoreRing(after.strength, 'Strength')}${scoreRing(after.accuracy, 'Accuracy')}
+          <div class="grow small"><div>💪 Strength <b>${before.strength} → ${after.strength}</b></div><div>🎯 Accuracy <b>${before.accuracy} → ${after.accuracy}</b></div><div class="faint">Type: ${esc(type)}</div></div></div>
+        <div class="code-out" style="margin-top:12px">${esc(out)}</div>
+        ${promptActions(out, { title: text.slice(0, 40) })}
+        <button class="btn ghost sm" style="margin-top:8px" data-action="check-enhanced" data-key="${keep(out)}" data-type="${esc(type)}">🔁 Load into checker</button>
+        <p class="faint small" style="margin-top:10px">Scores measure how complete and precise the prompt is. A perfect prompt gives the AI the best chance, but always double-check important facts in its answer.</p>`;
       $('#lab-out').animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 400, easing: 'ease-out' });
-      play('whoosh');
+      play('levelup');
+      if (after.overall === 100) confetti(90);
       const day = today();
       if (S().enhancedDay !== day) { store.set({ enhancedDay: day }); reward(10, el); }
+      setTimeout(() => $('#lab-out')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+      break;
+    }
+    case 'check-enhanced': {
+      labState.text = TEXTS.get(el.dataset.key) || '';
+      labState.type = el.dataset.type || 'Auto';
+      render();
+      setTimeout(() => $('#lab-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+      play('whoosh');
       break;
     }
     case 'use-template': {
@@ -1257,12 +1231,18 @@ document.addEventListener('input', (e) => {
     $('#kw-grid').innerHTML = list.map(flipCard).join('') || '<div class="empty">No keywords found.</div>';
   }
   if (t.id === 'lab-input') { labState.text = t.value; renderLabScore(); }
+  if (t.id === 'lab-audience') labState.audience = t.value;
+  if (t.id === 'lab-goal') labState.goal = t.value;
 });
+
+document.addEventListener('toggle', (e) => {
+  if (e.target.classList?.contains('lab-options')) labState.optionsOpen = e.target.open;
+}, true);
 
 document.addEventListener('change', async (e) => {
   const t = e.target;
   const s = S();
-  if (t.id === 'lab-type') labState.type = t.value;
+  if (t.id === 'lab-type') { labState.type = t.value; renderLabScore(); }
   if (t.id === 'lab-tone') labState.tone = t.value;
   if (t.id === 'lab-length') labState.length = t.value;
   if (t.id === 'lab-format') labState.format = t.value;

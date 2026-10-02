@@ -14,7 +14,8 @@
 | 🎓 **30 prompting lessons** | A learning path from Beginner to Expert: few-shot, chain-of-thought, XML tags, chaining, system prompts, agents, evals, prompt injection, context engineering… |
 | 🔑 **Keyword of the day** | 5 new power words every day from a 90+ keyword bank, on flip cards |
 | 🧠 **Daily quiz & 🎯 challenge** | New questions and a hands-on challenge every day |
-| 🧪 **Prompt Lab** | Live prompt strength score, a one-tap **Enhancer**, 10 pro templates, and saved prompts. Opens directly in Claude or ChatGPT |
+| 🩺 **Prompt Checker** | Scores any prompt for **Strength** (10 checks: role, task, goal, audience, format, length, tone, constraints, example, self-check) and **Accuracy** (vague words, detail, numbers, contradictions, fact-check guard, clarifying questions, structure, calm wording), shows every check with a fix, and **⚡ Enhance to 100%** rewrites it. It has a separate rubric for image prompts and never alters pasted code |
+| 🧪 **Prompt Lab** | 10 pro templates and saved prompts that open in Claude or ChatGPT |
 | 👤 **Profile** | Name, avatar, skill level, interests, XP and levels, streaks and 13 badges. Stored privately on your device, with export and import |
 | 🔔 **Phone notifications** | A daily briefing at your chosen time (top headline plus keyword of the day) |
 | 🎨 **Neon Cyber design** | Animated splash, glass cards, confetti, pop-ups, level-ups and synthesised sound effects (toggle in Settings) |
@@ -50,6 +51,7 @@ Optional: add a repository **variable** `SITE_URL` (your Pages URL) so tapping a
 npm install
 npm run news    # fetch the latest news into data/news.json
 npm start       # http://localhost:8080
+npm test        # prompt checker test suite
 ```
 
 ## 📁 Structure
@@ -61,6 +63,7 @@ sw.js                   Service worker: offline cache, push, background sync
 assets/css/style.css    Neon Cyber theme and animations
 assets/js/app.js        Router, screens, pop-ups, Lab, notifications
 assets/js/content.js    Lessons, keywords, quiz, challenges, templates
+assets/js/promptcheck.js Prompt Checker: scoring and enhancing (pure, unit-tested)
 assets/js/daily.js      Date-seeded "of the day" picks (shared with the push script)
 assets/js/store.js      On-device profile, XP, streaks, badges
 assets/js/sound.js      Web Audio sound effects

@@ -610,15 +610,3 @@ export const TEMPLATES = [
   { id: 't-agent', icon: '🤖', name: 'Agent Brief', fields: ['goal', 'tools', 'limits'], template: 'Goal: {{goal}}\nTools available: {{tools}}\nLimits: {{limits}}\n\nWork autonomously. Keep a short progress checklist. Before any irreversible action, stop and ask me. Definition of done: the goal is verifiably met, and you summarise what you did, what you verified, and anything left open.' },
   { id: 't-system', icon: '⚙️', name: 'System Prompt', fields: ['assistant name', 'product', 'audience'], template: 'You are {{assistant name}}, the assistant for {{product}}. Your users are {{audience}}.\n\nGoal: solve their problem in as few messages as possible.\nStyle: friendly, concise, numbered steps for instructions.\nIf the request is ambiguous, ask one clarifying question.\nIf you do not know, say so and suggest where to find the answer.\nNever invent policies, prices or features.' },
 ];
-
-// Words that make prompts stronger (used by the prompt analyser).
-export const STRENGTH_SIGNALS = {
-  role: /\b(you are|act as|as an? |imagine you('| a)re|role:)/i,
-  audience: /\b(for (a|an|my|the)|audience|readers?|beginners?|students?|customers?|kids?|executives?)\b/i,
-  format: /\b(table|bullet|list|json|markdown|steps?|paragraphs?|headings?|format|outline|csv)\b/i,
-  length: /\b(\d+\s*(words?|sentences?|bullets?|points?|lines?|paragraphs?|items?|ideas?|examples?)|under \d+|max(imum)? \d+|at most|no more than)\b/i,
-  constraints: /\b(avoid|without|must|only|don'?t|do not|never|tone|style|constraint|limit)\b/i,
-  examples: /\b(for example|e\.g\.|example|such as|like this|<example>)\b/i,
-  reasoning: /\b(step by step|think|reason|explain why|first,|then|finally|assumptions?)\b/i,
-  context: /\b(because|context|background|goal|so that|i('| a)m|my |we('| a)re)\b/i,
-};

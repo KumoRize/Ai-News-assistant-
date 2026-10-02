@@ -35,6 +35,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Run tests
+        run: npm test
+
       - name: Fetch latest AI news
         run: npm run news
         continue-on-error: true

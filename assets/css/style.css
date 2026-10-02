@@ -364,6 +364,26 @@ select.input option { background: var(--bg-2); }
 .progress-line { height: 6px; border-radius: 9px; background: rgba(255,255,255,.08); overflow: hidden; }
 .progress-line > i { display: block; height: 100%; background: var(--grad); transition: width 1s var(--ease); }
 
+/* Prompt Checker (Lab) */
+#lab-out, #lab-input, #notify { scroll-margin-top: 84px; }
+.score-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.score-head .ring { width: 82px; height: 82px; }
+.score-head .ring b { font-size: 22px; }
+.grade { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+.lab-options, .breakdown { margin-top: 12px; border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; background: rgba(255,255,255,.02); }
+.lab-options summary, .breakdown summary { cursor: pointer; font-weight: 700; font-size: 14px; list-style-position: inside; }
+.check-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+@media (max-width: 560px) { .check-cols { grid-template-columns: 1fr; } }
+.check-col h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--cyan); margin-bottom: 6px; }
+.check { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.check:first-of-type { border-top: 0; }
+.check .c-ico { width: 18px; text-align: center; flex: none; }
+.check.ok .c-ico { color: var(--green); }
+.check.no .c-ico { color: var(--pink); }
+.check b { display: block; font-weight: 600; }
+.check .c-tip { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.check .c-pts { color: var(--faint); font-size: 12px; flex: none; font-variant-numeric: tabular-nums; }
+
 /* Score meter (Lab) */
 .score { display: flex; gap: 16px; align-items: center; }
 .score .ring { width: 86px; height: 86px; }
